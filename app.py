@@ -2,6 +2,7 @@
 import os
 import io
 import time
+import math
 import datetime
 import urllib.request
 import json
@@ -34,13 +35,13 @@ FONT_PATH = find_font()
 
 WEATHER_CODES = {
     0: "晴朗", 1: "晴间多云", 2: "多云", 3: "阴天",
-    45: "有雾", 48: "浓雾", 51: "小毛毛雨", 53: "毛毛雨", 55: "密毛毛雨",
+    45: "有雾", 48: "浓雾", 51: "小毛毛雨", 53: "毛毛�?, 55: "密毛毛雨",
     61: "小雨", 63: "中雨", 65: "大雨", 71: "小雪", 73: "中雪", 75: "大雪",
-    80: "阵雨", 81: "中阵雨", 82: "强阵雨", 85: "阵雪", 86: "大阵雪",
-    95: "雷阵雨", 96: "雷雨伴冰雹", 99: "强雷暴"
+    80: "阵雨", 81: "中阵�?, 82: "强阵�?, 85: "阵雪", 86: "大阵�?,
+    95: "雷阵�?, 96: "雷雨伴冰�?, 99: "强雷�?
 }
 
-WEEKDAYS_CN = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+WEEKDAYS_CN = ["星期一", "星期�?, "星期�?, "星期�?, "星期�?, "星期�?, "星期�?]
 
 def get_font(size):
     if FONT_PATH:
@@ -73,10 +74,60 @@ def fetch_quote():
             data = json.loads(resp.read().decode('utf-8'))
             return data.get('hitokoto', ''), data.get('from_who') or data.get('from') or ''
     except Exception as e:
-        return "博学之，审问之，慎思之，明辨之，笃行之。", "《礼记·中庸》"
+        return "博学之，审问之，慎思之，明辨之，笃行之�?, "《礼记·中庸�?
 
 def draw_rounded_card(draw, box, radius=16, outline=180, fill=255, width=2):
     draw.rounded_rectangle(box, radius=radius, outline=outline, fill=fill, width=width)
+
+def draw_weather_icon(draw, icon_type, cx, cy, size=130):
+    stroke = 6
+    if "�? in icon_type and "�? not in icon_type and "�? not in icon_type:
+        # SUN
+        r_core = int(size * 0.28)
+        draw.ellipse([cx - r_core, cy - r_core, cx + r_core, cy + r_core], fill=0)
+        ray_len = int(size * 0.16)
+        ray_start = r_core + 8
+        for angle in range(0, 360, 45):
+            rad = math.radians(angle)
+            x1 = cx + int(math.cos(rad) * ray_start)
+            y1 = cy + int(math.sin(rad) * ray_start)
+            x2 = cx + int(math.cos(rad) * (ray_start + ray_len))
+            y2 = cy + int(math.sin(rad) * (ray_start + ray_len))
+            draw.line([(x1, y1), (x2, y2)], fill=0, width=stroke)
+            
+    elif "�? in icon_type or "阵雨" in icon_type or "�? in icon_type:
+        # CLOUD + RAIN
+        top_y = cy - int(size * 0.2)
+        draw.ellipse([cx - 50, top_y - 15, cx - 10, top_y + 25], fill=0)
+        draw.ellipse([cx - 20, top_y - 35, cx + 30, top_y + 15], fill=0)
+        draw.ellipse([cx + 10, top_y - 15, cx + 50, top_y + 25], fill=0)
+        draw.rectangle([cx - 40, top_y + 5, cx + 40, top_y + 25], fill=0)
+        rain_y = top_y + 38
+        for dx in [-30, -10, 10, 30]:
+            draw.line([(cx + dx, rain_y), (cx + dx - 6, rain_y + 22)], fill=0, width=5)
+            
+    elif "�? in icon_type:
+        # CLOUD + SNOW
+        top_y = cy - int(size * 0.2)
+        draw.ellipse([cx - 50, top_y - 15, cx - 10, top_y + 25], fill=0)
+        draw.ellipse([cx - 20, top_y - 35, cx + 30, top_y + 15], fill=0)
+        draw.ellipse([cx + 10, top_y - 15, cx + 50, top_y + 25], fill=0)
+        draw.rectangle([cx - 40, top_y + 5, cx + 40, top_y + 25], fill=0)
+        for dx in [-25, 0, 25]:
+            draw.ellipse([cx + dx - 5, top_y + 42, cx + dx + 5, top_y + 52], fill=0)
+            
+    elif "�? in icon_type:
+        # FOG
+        for idx, (w, dy) in enumerate([(100, -25), (120, 0), (90, 25)]):
+            draw.rounded_rectangle([cx - w//2, cy + dy - 5, cx + w//2, cy + dy + 5], radius=5, fill=0)
+            
+    else:
+        # CLOUD (Default)
+        top_y = cy
+        draw.ellipse([cx - 55, top_y - 20, cx - 10, top_y + 25], fill=0)
+        draw.ellipse([cx - 25, top_y - 45, cx + 35, top_y + 15], fill=0)
+        draw.ellipse([cx + 10, top_y - 20, cx + 55, top_y + 25], fill=0)
+        draw.rectangle([cx - 45, top_y + 5, cx + 45, top_y + 25], fill=0)
 
 def generate_image_bytes():
     img = Image.new("L", (WIDTH, HEIGHT), color=255)
@@ -90,7 +141,7 @@ def generate_image_bytes():
 
     # --- 1. HEADER (Big Date Calendar Style) ---
     day_num_str = str(beijing_now.day)
-    year_month_str = f"{beijing_now.year}年 {beijing_now.month}月"
+    year_month_str = f"{beijing_now.year}�?{beijing_now.month}�?
     weekday_str = WEEKDAYS_CN[beijing_now.weekday()]
     
     font_huge_day = get_font(130)
@@ -112,16 +163,16 @@ def generate_image_bytes():
     
     draw.line([(60, 200), (WIDTH - 60, 200)], fill=200, width=2)
 
-    # --- 2. CARD 1: DAILY INSPIRATION (今日寄语 - 移至顶部) ---
-    draw_rounded_card(draw, [60, 230, WIDTH - 60, 520], radius=20, outline=160, fill=255, width=3)
-    draw.text((95, 250), "今日寄语 (Daily Inspiration)", font=get_font(28), fill=40)
-    draw.line([(95, 290), (WIDTH - 95, 290)], fill=230, width=1)
+    # --- 2. CARD 1: DAILY INSPIRATION (今日寄语 - 黑底白字，特大字�? ---
+    draw_rounded_card(draw, [60, 230, WIDTH - 60, 530], radius=24, outline=0, fill=0, width=1)
+    draw.text((95, 255), "�?今日寄语 �? (Daily Inspiration)", font=get_font(24), fill=180)
+    draw.line([(95, 295), (WIDTH - 95, 295)], fill=80, width=1)
     
     words = quote_text
     lines = []
     line = ""
     for char in words:
-        if len(line) >= 26:
+        if len(line) >= 22:
             lines.append(line)
             line = char
         else:
@@ -129,20 +180,22 @@ def generate_image_bytes():
     if line:
         lines.append(line)
         
-    y_text = 315
+    y_text = 320
+    font_quote_large = get_font(38)
     for l in lines[:3]:
-        draw.text((100, y_text), l, font=get_font(30), fill=20)
-        y_text += 44
+        draw.text((95, y_text), l, font=font_quote_large, fill=255)
+        y_text += 54
         
     if quote_author:
-        author_str = f"—— {quote_author}"
-        bbox = draw.textbbox((0, 0), author_str, font=get_font(24))
-        draw.text((WIDTH - 100 - (bbox[2] - bbox[0]), 465), author_str, font=get_font(24), fill=90)
+        author_str = f"—�?{quote_author}"
+        font_author = get_font(26)
+        bbox = draw.textbbox((0, 0), author_str, font=font_author)
+        draw.text((WIDTH - 95 - (bbox[2] - bbox[0]), 475), author_str, font=font_author, fill=200)
 
-    # --- 3. CARD 2: 5-DAY FORECAST (近期预报 - 中间) ---
-    draw_rounded_card(draw, [60, 545, WIDTH - 60, 915], radius=20, outline=160, fill=255, width=3)
-    draw.text((95, 570), "近期天气预报 (5-Day Forecast)", font=get_font(28), fill=40)
-    draw.line([(95, 610), (WIDTH - 95, 610)], fill=230, width=1)
+    # --- 3. CARD 2: 5-DAY FORECAST (近期天气预报) ---
+    draw_rounded_card(draw, [60, 555, WIDTH - 60, 925], radius=20, outline=160, fill=255, width=3)
+    draw.text((95, 580), "近期天气预报 (5-Day Forecast)", font=get_font(28), fill=40)
+    draw.line([(95, 620), (WIDTH - 95, 620)], fill=230, width=1)
     
     if weather and 'daily' in weather:
         daily = weather['daily']
@@ -156,23 +209,23 @@ def generate_image_bytes():
             x_center = 95 + i * col_width + col_width // 2
             
             bbox = draw.textbbox((0, 0), day_name, font=get_font(26))
-            draw.text((x_center - (bbox[2]-bbox[0])//2, 635), day_name, font=get_font(26), fill=0)
+            draw.text((x_center - (bbox[2]-bbox[0])//2, 645), day_name, font=get_font(26), fill=0)
             
             d_str = d_date.strftime("%m/%d")
             bbox = draw.textbbox((0, 0), d_str, font=get_font(22))
-            draw.text((x_center - (bbox[2]-bbox[0])//2, 675), d_str, font=get_font(22), fill=100)
+            draw.text((x_center - (bbox[2]-bbox[0])//2, 685), d_str, font=get_font(22), fill=100)
             
             bbox = draw.textbbox((0, 0), desc, font=get_font(24))
-            draw.text((x_center - (bbox[2]-bbox[0])//2, 735), desc, font=get_font(24), fill=30)
+            draw.text((x_center - (bbox[2]-bbox[0])//2, 745), desc, font=get_font(24), fill=30)
             
             t_str = f"{t_min}°~{t_max}°"
             bbox = draw.textbbox((0, 0), t_str, font=get_font(26))
-            draw.text((x_center - (bbox[2]-bbox[0])//2, 805), t_str, font=get_font(26), fill=0)
+            draw.text((x_center - (bbox[2]-bbox[0])//2, 815), t_str, font=get_font(26), fill=0)
 
-    # --- 4. CARD 3: TODAY WEATHER (实时天气 - 移至底部) ---
-    draw_rounded_card(draw, [60, 940, WIDTH - 60, 1380], radius=20, outline=160, fill=255, width=3)
-    draw.text((95, 965), f"{CITY_NAME} · 实时天气 (Current Weather)", font=get_font(28), fill=40)
-    draw.line([(95, 1005), (WIDTH - 95, 1005)], fill=230, width=1)
+    # --- 4. CARD 3: TODAY WEATHER WITH LARGE ICON (当日天气 + 超大天气图标) ---
+    draw_rounded_card(draw, [60, 950, WIDTH - 60, 1390], radius=20, outline=160, fill=255, width=3)
+    draw.text((95, 975), f"{CITY_NAME} · 实时天气 (Current Weather)", font=get_font(28), fill=40)
+    draw.line([(95, 1015), (WIDTH - 95, 1015)], fill=230, width=1)
     
     if weather and 'current' in weather:
         curr = weather['current']
@@ -187,32 +240,35 @@ def generate_image_bytes():
         min_today = round(daily['temperature_2m_min'][0])
         uv_today = round(daily.get('uv_index_max', [0])[0])
         
-        # Left side: Big temp & condition
-        draw.text((95, 1030), f"{temp}°", font=get_font(95), fill=0)
-        draw.text((310, 1040), f"{w_desc}", font=get_font(38), fill=20)
-        draw.text((310, 1095), f"今日温幅 {min_today}°C ~ {max_today}°C  |  体感 {feels_like}°C", font=get_font(25), fill=80)
+        # Left: Huge Temp & Condition
+        draw.text((95, 1035), f"{temp}°", font=get_font(105), fill=0)
+        draw.text((320, 1045), f"{w_desc}", font=get_font(42), fill=20)
+        draw.text((320, 1105), f"今日气温 {min_today}°C ~ {max_today}°C  |  体感 {feels_like}°C", font=get_font(25), fill=80)
         
-        # Divider line
-        draw.line([(95, 1165), (WIDTH - 95, 1165)], fill=220, width=2)
+        # Right: Big Weather Icon matching temperature size!
+        draw_weather_icon(draw, w_desc, cx=WIDTH - 180, cy=1090, size=135)
         
-        # Grid details
-        draw.text((100, 1195), "空气湿度", font=get_font(24), fill=110)
-        draw.text((100, 1235), f"{humidity}%", font=get_font(32), fill=0)
+        # Divider Line
+        draw.line([(95, 1180), (WIDTH - 95, 1180)], fill=220, width=2)
         
-        draw.text((340, 1195), "风速风力", font=get_font(24), fill=110)
-        draw.text((340, 1235), f"{wind_speed} km/h", font=get_font(32), fill=0)
+        # Grid metrics
+        draw.text((100, 1205), "空气湿度", font=get_font(24), fill=110)
+        draw.text((100, 1245), f"{humidity}%", font=get_font(32), fill=0)
         
-        draw.text((580, 1195), "紫外线指数", font=get_font(24), fill=110)
-        uv_desc = "弱" if uv_today <= 2 else ("中等" if uv_today <= 5 else "较强")
-        draw.text((580, 1235), f"{uv_today} ({uv_desc})", font=get_font(32), fill=0)
+        draw.text((340, 1205), "风速风�?, font=get_font(24), fill=110)
+        draw.text((340, 1245), f"{wind_speed} km/h", font=get_font(32), fill=0)
         
-        draw.text((820, 1195), "今日温差", font=get_font(24), fill=110)
-        draw.text((820, 1235), f"{max_today - min_today}°C", font=get_font(32), fill=0)
+        draw.text((580, 1205), "紫外线指�?, font=get_font(24), fill=110)
+        uv_desc = "�? if uv_today <= 2 else ("中等" if uv_today <= 5 else "较强")
+        draw.text((580, 1245), f"{uv_today} ({uv_desc})", font=get_font(32), fill=0)
+        
+        draw.text((820, 1205), "今日温差", font=get_font(24), fill=110)
+        draw.text((820, 1245), f"{max_today - min_today}°C", font=get_font(32), fill=0)
 
     # --- 5. FOOTER ---
     footer_text = "Kindle Voyage 桌面天气日历"
     bbox = draw.textbbox((0, 0), footer_text, font=get_font(22))
-    draw.text((WIDTH // 2 - (bbox[2]-bbox[0])//2, 1405), footer_text, font=get_font(22), fill=130)
+    draw.text((WIDTH // 2 - (bbox[2]-bbox[0])//2, 1415), footer_text, font=get_font(22), fill=130)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -221,4 +277,4 @@ def generate_image_bytes():
 if __name__ == "__main__":
     with open("dashboard.png", "wb") as f:
         f.write(generate_image_bytes())
-    print("Swapped cards and generated dashboard.png successfully!")
+    print("New high contrast dashboard.png generated successfully!")
