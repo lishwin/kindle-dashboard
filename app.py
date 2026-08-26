@@ -34,15 +34,15 @@ FONT_PATH = find_font()
 
 WEATHER_CODES = {
     0: "晴朗", 1: "晴间多云", 2: "多云", 3: "阴天",
-    45: "有雾", 48: "浓雾", 51: "小毛毛雨", 53: "毛毛�?, 55: "密毛毛雨",
+    45: "有雾", 48: "浓雾", 51: "小毛毛雨", 53: "毛毛雨", 55: "密毛毛雨",
     61: "小雨", 63: "中雨", 65: "大雨", 71: "小雪", 73: "中雪", 75: "大雪",
-    80: "阵雨", 81: "中阵�?, 82: "强阵�?, 85: "阵雪", 86: "大阵�?,
-    95: "雷阵�?, 96: "雷雨伴冰�?, 99: "强雷�?
+    80: "阵雨", 81: "中阵雨", 82: "强阵雨", 85: "阵雪", 86: "大阵雪",
+    95: "雷阵雨", 96: "雷雨伴冰雹", 99: "强雷暴"
 }
 
-WEEKDAYS_CN = ["星期一", "星期�?, "星期�?, "星期�?, "星期�?, "星期�?, "星期�?]
+WEEKDAYS_CN = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
 
-def get_font(size, bold=False):
+def get_font(size):
     if FONT_PATH:
         try:
             return ImageFont.truetype(FONT_PATH, size)
@@ -73,7 +73,7 @@ def fetch_quote():
             data = json.loads(resp.read().decode('utf-8'))
             return data.get('hitokoto', ''), data.get('from_who') or data.get('from') or ''
     except Exception as e:
-        return "博学之，审问之，慎思之，明辨之，笃行之�?, "《礼记·中庸�?
+        return "博学之，审问之，慎思之，明辨之，笃行之。", "《礼记·中庸》"
 
 def draw_rounded_card(draw, box, radius=16, outline=180, fill=255, width=2):
     draw.rounded_rectangle(box, radius=radius, outline=outline, fill=fill, width=width)
@@ -90,10 +90,9 @@ def generate_image_bytes():
 
     # --- 1. HEADER (Big Date Calendar Style) ---
     day_num_str = str(beijing_now.day)
-    year_month_str = f"{beijing_now.year}�?{beijing_now.month}�?
+    year_month_str = f"{beijing_now.year}年 {beijing_now.month}月"
     weekday_str = WEEKDAYS_CN[beijing_now.weekday()]
     
-    # Large Day number on the left
     font_huge_day = get_font(130)
     font_ym = get_font(34)
     font_wk = get_font(42)
@@ -101,19 +100,16 @@ def generate_image_bytes():
     
     draw.text((60, 35), day_num_str, font=font_huge_day, fill=0)
     
-    # Offset text next to huge day number
     bbox_day = draw.textbbox((0, 0), day_num_str, font=font_huge_day)
     offset_x = 60 + (bbox_day[2] - bbox_day[0]) + 30
     
     draw.text((offset_x, 50), year_month_str, font=font_ym, fill=80)
     draw.text((offset_x, 100), weekday_str, font=font_wk, fill=0)
     
-    # Right side meta
-    meta_text = f"📍 {CITY_NAME} · 今日天气日历"
+    meta_text = f"{CITY_NAME} · 今日天气日历"
     bbox_meta = draw.textbbox((0, 0), meta_text, font=font_city)
     draw.text((WIDTH - 60 - (bbox_meta[2] - bbox_meta[0]), 110), meta_text, font=font_city, fill=100)
     
-    # Separator line
     draw.line([(60, 200), (WIDTH - 60, 200)], fill=200, width=2)
 
     # --- 2. CURRENT WEATHER CARD ---
@@ -140,11 +136,11 @@ def generate_image_bytes():
         draw.text((100, 490), "空气湿度", font=get_font(24), fill=110)
         draw.text((100, 530), f"{humidity}%", font=get_font(32), fill=0)
         
-        draw.text((340, 490), "风速风�?, font=get_font(24), fill=110)
+        draw.text((340, 490), "风速风力", font=get_font(24), fill=110)
         draw.text((340, 530), f"{wind_speed} km/h", font=get_font(32), fill=0)
         
-        draw.text((580, 490), "紫外线指�?, font=get_font(24), fill=110)
-        uv_desc = "�? if uv_today <= 2 else ("中等" if uv_today <= 5 else "较强")
+        draw.text((580, 490), "紫外线指数", font=get_font(24), fill=110)
+        uv_desc = "弱" if uv_today <= 2 else ("中等" if uv_today <= 5 else "较强")
         draw.text((580, 530), f"{uv_today} ({uv_desc})", font=get_font(32), fill=0)
         
         draw.text((820, 490), "今日温差", font=get_font(24), fill=110)
@@ -203,7 +199,7 @@ def generate_image_bytes():
         y_text += 45
         
     if quote_author:
-        author_str = f"—�?{quote_author}"
+        author_str = f"—— {quote_author}"
         bbox = draw.textbbox((0, 0), author_str, font=get_font(24))
         draw.text((WIDTH - 100 - (bbox[2] - bbox[0]), 1315), author_str, font=get_font(24), fill=90)
 
