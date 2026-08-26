@@ -1,0 +1,34 @@
+name: Update Kindle Dashboard
+on:
+  schedule:
+    # Runs every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pillow requests
+
+      - name: Render dashboard image
+        run: |
+          python -c "import app; open('dashboard.png', 'wb').write(app.generate_image_bytes())"
+
+      - name: Commit and push dashboard.png
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add dashboard.png
+          git commit -m "Update dashboard.png [skip ci]" || exit 0
+          git push
