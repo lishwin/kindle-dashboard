@@ -5,11 +5,7 @@ import time
 import datetime
 import urllib.request
 import json
-from fastapi import FastAPI, Response
-from fastapi.responses import HTMLResponse
 from PIL import Image, ImageDraw, ImageFont
-
-app = FastAPI(title="Kindle Voyage Dashboard")
 
 WIDTH = 1072
 HEIGHT = 1448
@@ -86,7 +82,6 @@ def generate_image_bytes():
     img = Image.new("L", (WIDTH, HEIGHT), color=255)
     draw = ImageDraw.Draw(img)
 
-    # Convert to Beijing time (UTC+8)
     utc_now = datetime.datetime.now(datetime.timezone.utc)
     beijing_now = utc_now + datetime.timedelta(hours=8)
     
@@ -202,39 +197,7 @@ def generate_image_bytes():
     img.save(buf, format="PNG")
     return buf.getvalue()
 
-@app.get("/dashboard.png")
-@app.get("/screen.png")
-def get_dashboard():
-    img_bytes = generate_image_bytes()
-    return Response(
-        content=img_bytes,
-        media_type="image/png",
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
-    )
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-    return f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Kindle Voyage 云端看板</title>
-    <style>
-        body {{ background: #121212; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }}
-        .card {{ display: inline-block; background: #1e1e1e; padding: 15px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); }}
-        img {{ border: 2px solid #ddd; border-radius: 8px; max-width: 480px; height: auto; display: block; }}
-        .btn {{ display: inline-block; background: #0078d4; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-top: 15px; font-weight: bold; }}
-    </style>
-</head>
-<body>
-    <h2>Kindle Voyage 云端看板服务 (24h 在线)</h2>
-    <div class="card">
-        <img src="/dashboard.png?t={int(time.time())}" alt="Dashboard Preview">
-        <a class="btn" href="javascript:location.reload()">🔄 刷新预览</a>
-    </div>
-</body>
-</html>"""
-
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    with open("dashboard.png", "wb") as f:
+        f.write(generate_image_bytes())
+    print("Generated dashboard.png successfully!")
